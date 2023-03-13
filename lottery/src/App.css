@@ -1,0 +1,41 @@
+.main{
+  background-color: #96caea;
+  font-family: ABeeZee;
+}
+.nav{
+  padding-top: 10px;
+  align-items: center;
+  text-align: center;
+  font-family: ABeeZee;
+  color: #0a0a0a;
+}
+.buttonfield{
+  padding-top: 20px;
+}
+.field{
+  align-items: center;
+  text-align: center;
+  padding-top: 5px;
+  padding-bottom: 20px;
+  min-height: 280px;
+}
+.select{
+  padding-top: 80px;
+}
+
+.column {
+  float: left;
+  margin: 80px;
+  width: 35%;
+  padding: 10px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+.winner{
+  padding-top: 20px;
+}
