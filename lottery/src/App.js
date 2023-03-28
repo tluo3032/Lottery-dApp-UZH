@@ -1,5 +1,7 @@
-import './App.css';
+import './styles/App.css';
 import React from "react";
+import {useState} from "react";
+import {useEffect} from "react";
 import {Button, Card, FormHelperText, Grid} from "@mui/material";
 import {Container} from "@mui/material";
 import Select, {SelectChangeEvent} from "@mui/material/Select";
@@ -7,9 +9,24 @@ import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import Box from "@mui/material/Box";
+import Web3 from "web3";
+import detectEthereumProvider from '@metamask/detect-provider';
 
 
 function App() {
+    const [walletAddress, setWalletAddress]=useState();
+    const connectWallet = async()=>{
+        const provider =await detectEthereumProvider();
+        if(typeof window.ethereum !== 'undefined'){
+            console.log("MetaMask is installed!");
+            const accounts = await window.ethereum.request({method:"eth_requestAccounts"});
+            const account=accounts[0];
+            setWalletAddress(account);
+            console.log(walletAddress);
+        }else{
+            console.log("MetaMask is not installed");
+        }
+    };
     const [number, setNumber] = React.useState('');
 
     const handleChange = (event: SelectChangeEvent) => {
@@ -17,16 +34,20 @@ function App() {
     };
 
     return (
-      <div class="main">
-          <div class="nav">
+      <div className="main">
+          <div className="nav">
               <h1>Lottery dApp</h1>
           </div>
-          <div class="row">
-              <div class="column">
-                  <div class="field">
+          <div className="row">
+              <div className="column">
+                  <div className="field">
                       <Card sx={{minHeight:320,padding:2}}>
-                          <div class="buttonfield">
-                              <Button variant={"contained"}>Connect Wallet</Button>
+                          <div className="buttonfield">
+                              <Button onClick={connectWallet} variant={"contained"} >Connect Wallet</Button>
+                          </div>
+                          <div className={"account"}>
+                              Your account address:<br/>
+                              {walletAddress}
                           </div>
                           <div className="select">
                               <Box sx={{minWidth: 60}}>
@@ -69,10 +90,10 @@ function App() {
                       </Card>
                   </div>
               </div>
-              <div class="column">
-                  <div class="field">
+              <div className="column">
+                  <div className="field">
                       <Card sx={{minHeight:320,padding:2}}>
-                          <div class="winner">
+                          <div className="winner">
                               <Button variant="outlined">Get Winner</Button>
                               <h2>The winner is Sally</h2>
                           </div>
