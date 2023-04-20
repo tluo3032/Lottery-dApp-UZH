@@ -16,6 +16,7 @@ function App() {
     const [betNumber, setBetNumber] = useState(0);
     const [balance, setBalance] = useState(0);
     const [accounts, setAccounts] = useState([]);
+    const [players, setPlayers] = useState([]);
 
 
 
@@ -27,6 +28,19 @@ function App() {
             },
         }
     });
+
+    async function fetchPlayers() {
+        try {
+            if (lotteryContract && lotteryContract.options.address) {
+                const fetchedPlayers = await lotteryContract.methods.getPlayers().call();
+                setPlayers(fetchedPlayers);
+            } else {
+                console.log("Lottery contract is not loaded or doesn't have an address set");
+            }
+        } catch (err) {
+            console.error("Error fetching players:", err);
+        }
+    }
 
     const loadContract = async () => {
         const provider = await detectEthereumProvider();
@@ -172,6 +186,7 @@ function App() {
         } else {
             console.log("MetaMask is not installed");
         }
+        await fetchPlayers();
     };
 
 
@@ -231,11 +246,13 @@ function App() {
 
         const accounts = await web3.eth.getAccounts();
         const options = {
-            from: accounts[0]
+            from: accounts[0],
+            value: web3.utils.toWei(betNumber, 'ether') // Add this line
         };
 
         await lotteryContract.methods.joinTheLottery().send(options);
         fetchBalance();
+        await fetchPlayers();
     }
 
 
@@ -307,6 +324,11 @@ function App() {
                     <div className="right-column">
                         <div className="players">
                             <h3>playerlist</h3>
+                            <ul>
+                                {players.map((player, index) => (
+                                    <li key={index}>{player}</li>
+                                ))}
+                            </ul>
                             <div className="buttonfield">
                                 <Button variant={"contained"} color="warning">Get Winner</Button>
                             </div>
