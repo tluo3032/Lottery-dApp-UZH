@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
-// There is a problem while calling blockhash on Javascript VM. As an environment, please select Custom-External Http Provider, Ganache.
-
 pragma solidity ^0.8.19;
 
-contract Lottery{
-    uint public lottery_over_block;
+contract Lottery {
+    uint public lotteryEndBlock;
 
     // List of the players - payable modifier in order to receive payment or ether
     address payable[] public players;
@@ -12,21 +10,45 @@ contract Lottery{
     // State variable to store the current round balance
     uint public currentRoundBalance;
 
+    address payable public winnerAddress;
+    uint public prizeAmount;
+
     constructor() {
         // Block number determining the end of the lottery
-        lottery_over_block = block.number + 5;
+        lotteryEndBlock = block.number + 5;
     }
 
     function joinTheLottery() public payable {
-        // Lottery hasn't finished
-        require(block.number < 1+lottery_over_block);
-        // Player should send some ether to join requirement
-        require(msg.value > .01 ether);
+        require(block.number <= lotteryEndBlock, "The lottery has ended");
+        require(msg.value > .01 ether, "Minimum bet is 0.01 ether");
+        require(!hasUserJoined(msg.sender), "User has already joined the lottery");
+
         // Add the address who invokes this function to the players array
         players.push(payable(msg.sender));
 
         // Update the current round balance
         currentRoundBalance += msg.value;
+
+        // Check if 5 players have joined
+        if (players.length == 5) {
+            drawWinner();
+        }
+    }
+
+
+    function hasUserJoined(address user) private view returns (bool) {
+        for (uint i = 0; i < players.length; i++) {
+            if (players[i] == user) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function checkAndDrawWinner() private {
+        if (hasLotteryEnded()) {
+            drawWinner();
+        }
     }
 
     function getBlockNumber() public view returns (uint) {
@@ -34,31 +56,47 @@ contract Lottery{
     }
 
     function collectPrize() public {
-        //transfer the balance of the smart contract to the winner
+        require(amIWinner(), "You are not the winner");
         players[winner()].transfer(address(this).balance);
     }
 
     function winner() public view returns (uint) {
         require(players.length > 0, "No players in the lottery");
-        require(block.number >= lottery_over_block);
-        uint index = uint(blockhash(lottery_over_block));
+        require(block.number >= lotteryEndBlock, "The lottery has not ended yet");
+        uint index = uint(blockhash(lotteryEndBlock));
         return index % players.length;
     }
 
-
     function amIWinner() public view returns (bool) {
-        //checks if the interacting account is the winner
         return msg.sender == players[winner()];
     }
 
     function getBalance() public view returns (uint) {
-        //view but not modify the lottery balance
         return address(this).balance;
     }
 
-    function getPlayers() public view returns (address payable[] memory){
-        //stored temporarily only in the func lifecycle
+    function getPlayers() public view returns (address payable[] memory) {
         return players;
+    }
+
+    function hasLotteryEnded() public view returns (bool) {
+        return block.number >= lotteryEndBlock || players.length == 5;
+    }
+
+    function drawWinner() private {
+        uint winnerIndex = winner();
+        winnerAddress = players[winnerIndex];
+        prizeAmount = address(this).balance;
+
+        // Transfer prize to winner
+        winnerAddress.transfer(prizeAmount);
+
+        // Reset the lottery
+        delete players;
+        currentRoundBalance = 0;
+
+        // Set lotteryEndBlock to 5 blocks after the current block
+        lotteryEndBlock = block.number + 5;
     }
 
 }

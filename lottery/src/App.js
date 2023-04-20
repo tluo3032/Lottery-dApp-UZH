@@ -17,6 +17,7 @@ function App() {
     const [balance, setBalance] = useState(0);
     const [accounts, setAccounts] = useState([]);
     const [players, setPlayers] = useState([]);
+    const [lotteryEnded, setLotteryEnded] = useState(false);
 
 
 
@@ -134,7 +135,20 @@ function App() {
                 },
                 {
                     "inputs": [],
-                    "name": "lottery_over_block",
+                    "name": "hasLotteryEnded",
+                    "outputs": [
+                        {
+                            "internalType": "bool",
+                            "name": "",
+                            "type": "bool"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "lotteryEndBlock",
                     "outputs": [
                         {
                             "internalType": "uint256",
@@ -204,6 +218,24 @@ function App() {
         }
     }
 
+    async function hasLotteryEnded() {
+        try {
+            if (lotteryContract && lotteryContract.options.address) {
+                const currentBlockNumber = await web3.eth.getBlockNumber();
+                const lotteryOverBlock = await lotteryContract.methods.lotteryEndBlock().call();
+                return currentBlockNumber >= lotteryOverBlock;
+            } else {
+                console.log("Lottery contract is not loaded or doesn't have an address set");
+                return false;
+            }
+        } catch (err) {
+            console.error("Error checking if lottery has ended:", err);
+            return false;
+        }
+    }
+
+
+
 
     useEffect(() => {
         async function loadAccounts() {
@@ -219,6 +251,31 @@ function App() {
             loadAccounts();
         }
     }, [web3]);
+
+
+    useEffect(() => {
+        async function fetchData() {
+            await fetchBalance();
+            const ended = await hasLotteryEnded();
+            setLotteryEnded(ended);
+        }
+
+        if (lotteryContract && lotteryContract.options.address) {
+            fetchData();
+        }
+    }, [lotteryContract, fetchBalance]);
+
+    useEffect(() => {
+        async function updateLotteryEnded() {
+            const ended = await hasLotteryEnded();
+            setLotteryEnded(ended);
+        }
+
+        if (lotteryContract && lotteryContract.options.address) {
+            updateLotteryEnded();
+        }
+    }, [lotteryContract, players]);
+
 
 
 
@@ -306,7 +363,13 @@ function App() {
 
                                 <div className="buttonfield">
                                     <ThemeProvider theme={theme}>
-                                        <Button onClick={handleJoinLottery} variant={"contained"} >Join The Lottery</Button>
+                                        <Button
+                                            onClick={handleJoinLottery}
+                                            variant={"contained"}
+                                            disabled={lotteryEnded}
+                                        >
+                                            Join The Lottery
+                                        </Button>
                                     </ThemeProvider>
                                 </div>
                             </div>
