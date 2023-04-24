@@ -3,6 +3,8 @@ pragma solidity ^0.8.19;
 
 contract Lottery {
     uint public lotteryEndBlock;
+    uint public nonce;
+
 
     // List of the players - payable modifier in order to receive payment or ether
     address payable[] public players;
@@ -15,7 +17,7 @@ contract Lottery {
 
     constructor() {
         // Block number determining the end of the lottery
-        lotteryEndBlock = block.number + 5;
+        lotteryEndBlock = block.number+5;
     }
 
     function joinTheLottery() public payable {
@@ -57,18 +59,23 @@ contract Lottery {
 
     function collectPrize() public {
         require(amIWinner(), "You are not the winner");
-        players[winner()].transfer(address(this).balance);
+        (uint winnerIndex, uint checkedNonce)=winner();
+        players[winnerIndex].transfer(address(this).balance);
     }
 
-    function winner() public view returns (uint) {
+    function winner() public returns (uint,uint) {
         require(players.length > 0, "No players in the lottery");
         require(block.number >= lotteryEndBlock, "The lottery has not ended yet");
-        uint index = uint(blockhash(lotteryEndBlock));
-        return index % players.length;
+        nonce++;
+        bytes32 seed = keccak256(abi.encodePacked(lotteryEndBlock,nonce));
+        uint randomNum = uint(keccak256(abi.encode(seed)));
+        uint Index = randomNum % players.length;
+        return (Index, nonce);
     }
 
-    function amIWinner() public view returns (bool) {
-        return msg.sender == players[winner()];
+    function amIWinner() public returns (bool) {
+        (uint winnerIndex, uint checkedNonce)=winner();
+        return msg.sender == players[winnerIndex]&&checkedNonce==nonce;
     }
 
     function getBalance() public view returns (uint) {
@@ -84,7 +91,7 @@ contract Lottery {
     }
 
     function drawWinner() private {
-        uint winnerIndex = winner();
+        (uint winnerIndex, uint checkedNonce)=winner();
         winnerAddress = players[winnerIndex];
         prizeAmount = address(this).balance;
 
