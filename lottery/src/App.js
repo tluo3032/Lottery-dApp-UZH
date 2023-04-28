@@ -18,6 +18,7 @@ function App() {
     const [accounts, setAccounts] = useState([]);
     const [players, setPlayers] = useState([]);
     const [lotteryEnded, setLotteryEnded] = useState(false);
+    const [salt, setSalt] = useState("");
 
 
 
@@ -51,14 +52,46 @@ function App() {
             const abi = [
                 {
                     "inputs": [],
+                    "name": "amIWinner",
+                    "outputs": [
+                        {
+                            "internalType": "bool",
+                            "name": "",
+                            "type": "bool"
+                        }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
                     "name": "collectPrize",
                     "outputs": [],
                     "stateMutability": "nonpayable",
                     "type": "function"
                 },
                 {
-                    "inputs": [],
-                    "name": "joinTheLottery",
+                    "inputs": [
+                        {
+                            "internalType": "bytes32",
+                            "name": "_commitment",
+                            "type": "bytes32"
+                        }
+                    ],
+                    "name": "commit",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "_salt",
+                            "type": "uint256"
+                        }
+                    ],
+                    "name": "reveal",
                     "outputs": [],
                     "stateMutability": "payable",
                     "type": "function"
@@ -70,12 +103,36 @@ function App() {
                 },
                 {
                     "inputs": [],
-                    "name": "amIWinner",
+                    "name": "winner",
                     "outputs": [
                         {
-                            "internalType": "bool",
+                            "internalType": "uint256",
                             "name": "",
-                            "type": "bool"
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [
+                        {
+                            "internalType": "address",
+                            "name": "",
+                            "type": "address"
+                        }
+                    ],
+                    "name": "commitments",
+                    "outputs": [
+                        {
+                            "internalType": "bytes32",
+                            "name": "",
+                            "type": "bytes32"
                         }
                     ],
                     "stateMutability": "view",
@@ -160,6 +217,19 @@ function App() {
                     "type": "function"
                 },
                 {
+                    "inputs": [],
+                    "name": "nonce",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
                     "inputs": [
                         {
                             "internalType": "uint256",
@@ -180,12 +250,25 @@ function App() {
                 },
                 {
                     "inputs": [],
-                    "name": "winner",
+                    "name": "prizeAmount",
                     "outputs": [
                         {
                             "internalType": "uint256",
                             "name": "",
                             "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "winnerAddress",
+                    "outputs": [
+                        {
+                            "internalType": "address payable",
+                            "name": "",
+                            "type": "address"
                         }
                     ],
                     "stateMutability": "view",
@@ -295,7 +378,20 @@ function App() {
         setBetNumber(value);
     }
 
-    async function handleJoinLottery() {
+    async function handleCommit() {
+        if (!lotteryContract) {
+            console.log("Lottery contract is not loaded or doesn't have an address set");
+            return;
+        }
+
+        const accounts = await web3.eth.getAccounts();
+        const userAddress = accounts[0];
+        const hashedCommitment = web3.utils.soliditySha3({ type: 'address', value: userAddress }, { type: 'uint256', value: salt });
+
+        await lotteryContract.methods.commit(hashedCommitment).send({ from: userAddress });
+    }
+
+    async function handleReveal() {
         if (!lotteryContract) {
             console.log("Lottery contract is not loaded or doesn't have an address set");
             return;
@@ -304,10 +400,10 @@ function App() {
         const accounts = await web3.eth.getAccounts();
         const options = {
             from: accounts[0],
-            value: web3.utils.toWei(betNumber, 'ether') // Add this line
+            value: web3.utils.toWei(betNumber, 'ether')
         };
 
-        await lotteryContract.methods.joinTheLottery().send(options);
+        await lotteryContract.methods.reveal(salt).send(options);
         fetchBalance();
         await fetchPlayers();
     }
@@ -361,17 +457,41 @@ function App() {
                                     onChange={(e) => handleSetNumber(e.target.value)}
                                 />
 
+                                <TextField
+                                    id="outlined-secret-number"
+                                    value={salt}
+                                    label="Secret Number"
+                                    type="number"
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    onChange={(e) => setSalt(e.target.value)}
+                                />
+
                                 <div className="buttonfield">
                                     <ThemeProvider theme={theme}>
                                         <Button
-                                            onClick={handleJoinLottery}
+                                            onClick={handleCommit}
                                             variant={"contained"}
                                             disabled={lotteryEnded}
                                         >
-                                            Join The Lottery
+                                            Commit
                                         </Button>
                                     </ThemeProvider>
                                 </div>
+
+                                <div className="buttonfield">
+                                    <ThemeProvider theme={theme}>
+                                        <Button
+                                            onClick={handleReveal}
+                                            variant={"contained"}
+                                            disabled={lotteryEnded}
+                                        >
+                                            Reveal
+                                        </Button>
+                                    </ThemeProvider>
+                                </div>
+
                             </div>
 
                             <h3>The balance of this round:</h3>

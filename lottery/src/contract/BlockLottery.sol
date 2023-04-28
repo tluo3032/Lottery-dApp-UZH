@@ -5,33 +5,34 @@ contract Lottery {
     uint public lotteryEndBlock;
     uint public nonce;
 
-
-    // List of the players - payable modifier in order to receive payment or ether
     address payable[] public players;
-
-    // State variable to store the current round balance
     uint public currentRoundBalance;
+    mapping(address => bytes32) public commitments;
 
     address payable public winnerAddress;
     uint public prizeAmount;
 
     constructor() {
-        // Block number determining the end of the lottery
-        lotteryEndBlock = block.number+5;
+        lotteryEndBlock = block.number + 5;
     }
 
-    function joinTheLottery() public payable {
+    function commit(bytes32 _commitment) public {
         require(block.number <= lotteryEndBlock, "The lottery has ended");
+        require(commitments[msg.sender] == 0, "User has already joined the lottery");
+        commitments[msg.sender] = _commitment;
+    }
+
+    function reveal(uint256 _salt) public payable {
+        require(block.number > lotteryEndBlock, "The reveal phase has not started yet");
+        require(commitments[msg.sender] != 0, "User has not committed");
         require(msg.value > .01 ether, "Minimum bet is 0.01 ether");
-        require(!hasUserJoined(msg.sender), "User has already joined the lottery");
 
-        // Add the address who invokes this function to the players array
+        bytes32 expectedCommitment = keccak256(abi.encodePacked(msg.sender, _salt));
+        require(commitments[msg.sender] == expectedCommitment, "Invalid reveal");
+
         players.push(payable(msg.sender));
-
-        // Update the current round balance
         currentRoundBalance += msg.value;
 
-        // Check if 5 players have joined
         if (players.length == 5) {
             drawWinner();
         }
