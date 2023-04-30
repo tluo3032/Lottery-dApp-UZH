@@ -243,6 +243,7 @@ function App() {
             console.log("MetaMask is not installed");
         }
         await fetchPlayers();
+        await fetchWinnerAddress();
     };
 
     async function fetchBalance() {
@@ -296,7 +297,6 @@ function App() {
                 console.error("Error loading accounts:", err);
             }
         }
-
         if (web3) {
             loadAccounts();
         }
@@ -355,7 +355,6 @@ function App() {
         fetchBalance();
         await fetchPlayers();
         await fetchWinnerAddress();
-
     }
     return (
         <div className="main">
@@ -422,7 +421,7 @@ function App() {
                             <div>
                                 <h4>The winner of last round is:</h4>
                                 <div className="playerlist">{winnerAddress}</div>
-                                {winnerAddress === walletAddress?
+                                {winnerAddress && walletAddress && walletAddress.includes(winnerAddress.toLowerCase())?
                                 <div className={"info-text"}>
                                     Congrats!
                                 </div>:
