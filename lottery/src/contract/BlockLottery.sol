@@ -53,10 +53,6 @@ contract Lottery {
         }
     }
 
-    function getBlockNumber() public view returns (uint) {
-        return block.number;
-    }
-
     function collectPrize() public {
         require(amIWinner(), "You are not the winner");
         (uint winnerIndex, uint checkedNonce)=winner();
@@ -106,4 +102,8 @@ contract Lottery {
         lotteryEndBlock = block.number + 5;
     }
 
+    function getWinnerAddress() public view returns(address){
+        require(winnerAddress!=address(0),"No winner yet");
+        return winnerAddress;
+    }
 }

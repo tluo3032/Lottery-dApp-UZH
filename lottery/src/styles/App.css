@@ -78,7 +78,16 @@
 
 .players{
   background: rgba(243, 207, 129, 0.2);
-  height: 95%;
+  height: 60%;
+  width: 80%;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.winner{
+  background: rgba(243, 207, 129, 0.2);
+  margin-bottom: 25px;
+  height: 30%;
   width: 80%;
   border-radius: 10px;
   display: flex;
@@ -86,28 +95,15 @@
   justify-content: space-between;
 }
 
-
-h2{
-  padding:0;
-  margin: 10px;
-}
-h3{
-  font-weight: normal;
-}
-h6{
-  margin: 0;
-  padding: 0;
-  font-weight: lighter;
-}
 .buttonfield{
-  padding: 20px;
+  padding: 5px;
 }
 .field{
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 30px 50px;
+  padding: 20px 50px;
 }
 .select{
   padding-top: 10%;
@@ -115,4 +111,24 @@ h6{
 .account{
   font-size: 20px;
 }
-
+.playerlist{
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+  font-size: 12px;
+  text-align: left;
+  word-wrap: break-word;
+}
+h2{
+  padding:0;
+  margin: 5px;
+}
+h3{
+  font-weight: normal;
+  margin: 0;
+}
+h6{
+  margin: 0;
+  padding: 0;
+  font-weight: lighter;
+}

@@ -18,8 +18,7 @@ function App() {
     const [accounts, setAccounts] = useState([]);
     const [players, setPlayers] = useState([]);
     const [lotteryEnded, setLotteryEnded] = useState(false);
-
-
+    const [winnerAddress, setWinnerAddress]=useState("");
 
     const theme = createTheme({
         palette: {
@@ -47,22 +46,7 @@ function App() {
         const provider = await detectEthereumProvider();
         if (provider) {
             const web3 = new Web3(provider);
-            // todo: abi copied from remix
             const abi = [
-                {
-                    "inputs": [],
-                    "name": "collectPrize",
-                    "outputs": [],
-                    "stateMutability": "nonpayable",
-                    "type": "function"
-                },
-                {
-                    "inputs": [],
-                    "name": "joinTheLottery",
-                    "outputs": [],
-                    "stateMutability": "payable",
-                    "type": "function"
-                },
                 {
                     "inputs": [],
                     "stateMutability": "nonpayable",
@@ -78,7 +62,14 @@ function App() {
                             "type": "bool"
                         }
                     ],
-                    "stateMutability": "view",
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "collectPrize",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
                     "type": "function"
                 },
                 {
@@ -109,12 +100,12 @@ function App() {
                 },
                 {
                     "inputs": [],
-                    "name": "getBlockNumber",
+                    "name": "getPlayers",
                     "outputs": [
                         {
-                            "internalType": "uint256",
+                            "internalType": "address payable[]",
                             "name": "",
-                            "type": "uint256"
+                            "type": "address[]"
                         }
                     ],
                     "stateMutability": "view",
@@ -122,12 +113,12 @@ function App() {
                 },
                 {
                     "inputs": [],
-                    "name": "getPlayers",
+                    "name": "getWinnerAddress",
                     "outputs": [
                         {
-                            "internalType": "address payable[]",
+                            "internalType": "address",
                             "name": "",
-                            "type": "address[]"
+                            "type": "address"
                         }
                     ],
                     "stateMutability": "view",
@@ -148,7 +139,27 @@ function App() {
                 },
                 {
                     "inputs": [],
+                    "name": "joinTheLottery",
+                    "outputs": [],
+                    "stateMutability": "payable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
                     "name": "lotteryEndBlock",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "nonce",
                     "outputs": [
                         {
                             "internalType": "uint256",
@@ -180,12 +191,43 @@ function App() {
                 },
                 {
                     "inputs": [],
+                    "name": "prizeAmount",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
                     "name": "winner",
                     "outputs": [
                         {
                             "internalType": "uint256",
                             "name": "",
                             "type": "uint256"
+                        },
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "winnerAddress",
+                    "outputs": [
+                        {
+                            "internalType": "address payable",
+                            "name": "",
+                            "type": "address"
                         }
                     ],
                     "stateMutability": "view",
@@ -202,8 +244,6 @@ function App() {
         }
         await fetchPlayers();
     };
-
-
 
     async function fetchBalance() {
         try {
@@ -234,8 +274,18 @@ function App() {
         }
     }
 
-
-
+    async function fetchWinnerAddress(){
+        try {
+            if (lotteryContract && lotteryContract.options.address) {
+                const CurrentWinnerAddress = await lotteryContract.methods.getWinnerAddress().call();
+                setWinnerAddress(CurrentWinnerAddress);
+            } else {
+                console.log("Lottery contract is not loaded or doesn't have an address set");
+            }
+        } catch (err) {
+            console.error("Error fetching winner address:", err);
+        }
+    }
 
     useEffect(() => {
         async function loadAccounts() {
@@ -270,14 +320,10 @@ function App() {
             const ended = await hasLotteryEnded();
             setLotteryEnded(ended);
         }
-
         if (lotteryContract && lotteryContract.options.address) {
             updateLotteryEnded();
         }
     }, [lotteryContract, players]);
-
-
-
 
     const connectWallet = async () => {
         const provider = await detectEthereumProvider();
@@ -300,24 +346,17 @@ function App() {
             console.log("Lottery contract is not loaded or doesn't have an address set");
             return;
         }
-
         const accounts = await web3.eth.getAccounts();
         const options = {
             from: accounts[0],
             value: web3.utils.toWei(betNumber, 'ether') // Add this line
         };
-
         await lotteryContract.methods.joinTheLottery().send(options);
         fetchBalance();
         await fetchPlayers();
+        await fetchWinnerAddress();
+
     }
-
-
-
-
-
-
-
     return (
         <div className="main">
             <div className="body">
@@ -339,16 +378,16 @@ function App() {
                                     {walletAddress}</h6>
                             </div>}
                         </div>
-
                         <div className="interaction">
-                            <TextField
-                                id="outlined-lottery-contract-address"
-                                label="Lottery Contract Address"
-                                value={inputContractAddress}
-                                onChange={(e) => setInputContractAddress(e.target.value)}
-                            />
-                            <Button onClick={loadContract} variant={"contained"}>Load Contract</Button>
-
+                            <div className="field">
+                                <TextField
+                                    id="outlined-lottery-contract-address"
+                                    label="Lottery Contract Address"
+                                    value={inputContractAddress}
+                                    onChange={(e) => setInputContractAddress(e.target.value)}
+                                />
+                                <Button onClick={loadContract} variant={"contained"}>Load Contract</Button>
+                            </div>
                             <div className="field">
                                 <TextField
                                     id="outlined-number"
@@ -360,7 +399,6 @@ function App() {
                                     }}
                                     onChange={(e) => handleSetNumber(e.target.value)}
                                 />
-
                                 <div className="buttonfield">
                                     <ThemeProvider theme={theme}>
                                         <Button
@@ -373,27 +411,33 @@ function App() {
                                     </ThemeProvider>
                                 </div>
                             </div>
-
                             <h3>The balance of this round:</h3>
                             <h2><div>
                                 Current Lottery Balance: {balance} ETH
                             </div></h2>
-
-                            <div className="buttonfield">
-                                <Button variant={"outlined"} color={"warning"}>Collect</Button>
-                            </div>
                         </div>
                     </div>
                     <div className="right-column">
+                        <div className="winner">
+                            <div>
+                                <h4>The winner of last round is:</h4>
+                                <div className="playerlist">{winnerAddress}</div>
+                                {winnerAddress === walletAddress?
+                                <div className={"info-text"}>
+                                    Congrats!
+                                </div>:
+                                <div className={"info-text"}>
+                                    Try Again!
+                                </div>}
+                            </div>
+                        </div>
                         <div className="players">
                             <h3>playerlist</h3>
-                            <ul>
+
+                            <div className="playerlist">
                                 {players.map((player, index) => (
-                                    <li key={index}>{player}</li>
+                                    <div key={index}>{player}</div>
                                 ))}
-                            </ul>
-                            <div className="buttonfield">
-                                <Button variant={"contained"} color="warning">Get Winner</Button>
                             </div>
                         </div>
                     </div>
