@@ -8,40 +8,64 @@ contract Lottery{
 
     //list of the players - payable modifier in order to receive payment or ether
     address payable[] public players;
+    int private winner_index = -1;
 
     constructor() {
         //block number determining the end of the lottery
-        lottery_over_block = 5;
+        lottery_over_block = block.number + 5;
     }
 
     function joinTheLottery() public payable {
-        //lottery hasn't finished
-        require(block.number < 1+lottery_over_block);
+        require(block.number < 1+lottery_over_block, "The lottery has ended!");
         //player should send some ether to join requirement
-        require(msg.value > .01 ether);
+        require(msg.value > .01 ether, "Minimum bet is 0.01 ether!");
+        // Maximum 5 players
+        require(players.length < 5, "Maximum 5 players per lottery!");
+        // Only one ticket per account.
+        require(!hasUserJoined(msg.sender), "User has already joined the lottery!");
+
         //add the address who invokes this function to the players array 
         players.push(payable(msg.sender));
+    }
+
+    function hasUserJoined(address user) private view returns (bool) {
+        for (uint i = 0; i < players.length; i++) {
+            if (players[i] == user) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function getBlockNumber() public view returns (uint) {
         return block.number;
     }
 
+    function getLotteryEndBlock() public view returns (uint) {
+        return lottery_over_block;
+    }
+
     function collectPrize() public {
+        require(winner_index != -1, "Winner has not been decided yet!"); // we know the winner
         //transfer the balance of the smart contract to the winner
-        players[winner()].transfer(address(this).balance);
+        players[uint(winner_index)].transfer(address(this).balance);
     }
 
-    function winner() public view returns (uint) {
-        require(block.number >= lottery_over_block);
-        //The hash of the block decides the winner.
-        uint index = uint(blockhash(lottery_over_block));
-        return index % players.length;
+    function winner() public {
+        require(block.number >= lottery_over_block, "The lottery has not ended yet!");
+        require(winner_index == -1, "Winner has already been decided!");
+        require(players.length > 0, "No players in the lottery!");
+
+        //The hash of the block where the lottery ends, the timestamp of the previous block and the PREVRANDAO Opcode of the previous block decide the winner.
+        // Using the timestamp and prevrandao of the block where the lottery ends would be safer, but it is not supported by Solidity.
+        uint index = uint(keccak256(abi.encodePacked(blockhash(lottery_over_block), block.timestamp, block.prevrandao)));
+        winner_index = int(index % players.length);
     }
 
-    function amIWinner() public view returns (bool) {
+    function getWinnerAddress() public view returns (address) {
+        require(winner_index != -1, "Winner has not been decided yet!"); // we know the winner
         //checks if the interacting account is the winner
-        return msg.sender == players[winner()];
+        return players[uint(winner_index)];
     }
 
     function getBalance() public view returns (uint) {
