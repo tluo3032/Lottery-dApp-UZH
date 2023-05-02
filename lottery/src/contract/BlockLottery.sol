@@ -9,6 +9,7 @@ contract Lottery{
     //list of the players - payable modifier in order to receive payment or ether
     address payable[] public players;
     int private winner_index = -1;
+    address payable private winnerAddress;
 
     constructor() {
         //block number determining the end of the lottery
@@ -45,6 +46,10 @@ contract Lottery{
         return lottery_over_block;
     }
 
+    function hasLotteryEnded() public view returns (bool) {
+        return block.number >= lottery_over_block || players.length == 5;
+    }
+
     function collectPrize() public {
         require(winner_index != -1, "Winner has not been decided yet!");
         require(msg.sender == players[uint(winner_index)],"Only the winner can collect the prize!");
@@ -67,12 +72,13 @@ contract Lottery{
         // Using the timestamp and prevrandao of the block where the lottery ends would be safer, but it is not supported by Solidity.
         uint index = uint(keccak256(abi.encodePacked(blockhash(lottery_over_block), block.timestamp, block.prevrandao)));
         winner_index = int(index % players.length);
+        winnerAddress = players[uint(winner_index)];
     }
 
     function getWinnerAddress() public view returns (address) {
-        require(winner_index != -1, "Winner has not been decided yet!"); // we know the winner
-        //checks if the interacting account is the winner
-        return players[uint(winner_index)];
+        //display the winneraddress of the finished round
+        require(winnerAddress!=address(0),"No winner yet");
+        return winnerAddress;
     }
 
     function getBalance() public view returns (uint) {
