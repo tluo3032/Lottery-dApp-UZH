@@ -59,6 +59,7 @@ function App() {
         }
         await fetchPlayers();
         await fetchWinnerAddress();
+        await fetchWinnerAddress();
     };
 
     async function fetchBalance() {
@@ -78,8 +79,10 @@ function App() {
         try {
             if (lotteryContract && lotteryContract.options.address) {
                 const currentBlockNumber = await web3.eth.getBlockNumber();
-                const lotteryOverBlock = await lotteryContract.methods.lotteryEndBlock().call();
+                const lotteryOverBlock = await lotteryContract.methods.getLotteryEndBlock().call();
+                setLotteryEnded(currentBlockNumber >= lotteryOverBlock);
                 return currentBlockNumber >= lotteryOverBlock;
+
             } else {
                 console.log("Lottery contract is not loaded or doesn't have an address set");
                 return false;
@@ -89,6 +92,41 @@ function App() {
             return false;
         }
     }
+
+    async function handleWinnerSelect(){
+        if(lotteryEnded){
+            if (lotteryContract && lotteryContract.options.address) {
+                const winner = await lotteryContract.methods.winner().send({from:accounts[0]});
+                console.log("Select the winner!");
+                const newWinnerAddress = await lotteryContract.methods.getWinnerAddress().call();
+                setWinnerAddress(newWinnerAddress);
+                console.log("winner address is:");
+                console.log(newWinnerAddress);
+            } else {
+                console.log("Lottery contract is not loaded or doesn't have an address set");
+                return false;
+            }
+        }
+    }
+
+    async function handleCollectMoney(){
+        if(lotteryEnded){
+            if (lotteryContract && lotteryContract.options.address) {
+                const prizeMoney = await lotteryContract.methods.collectPrize().send({from:accounts[0]});
+                console.log(accounts[0]);
+                await fetchWinnerAddress();
+                fetchBalance();
+                fetchPlayers();
+            } else {
+                console.log("Lottery contract is not loaded or doesn't have an address set");
+                return false;
+            }
+        }
+    }
+
+    useEffect(()=>{
+        fetchWinnerAddress();
+    },lotteryEnded)
 
     async function fetchWinnerAddress(){
         try {
@@ -152,6 +190,7 @@ function App() {
         }
     };
 
+
     const handleSetNumber = (value) => {
         setBetNumber(value);
     }
@@ -167,7 +206,7 @@ function App() {
             value: web3.utils.toWei(betNumber, 'ether') // Add this line
         };
         await lotteryContract.methods.joinTheLottery().send(options);
-        fetchBalance();
+        await fetchBalance();
         await fetchPlayers();
         await fetchWinnerAddress();
     }
@@ -237,12 +276,26 @@ function App() {
                                 <h4>The winner of last round is:</h4>
                                 <div className="playerlist">{winnerAddress}</div>
                                 {winnerAddress && walletAddress && walletAddress.includes(winnerAddress.toLowerCase())?
-                                <div className={"info-text"}>
-                                    Congrats!
-                                </div>:
+                                    <div>
+                                    <div className={"info-text"}>
+                                        Congrats!
+                                    </div>
+                                    {lotteryEnded &&
+                                        <div className="buttonfield">
+                                            <ThemeProvider theme={theme}>
+                                                <Button variant="contained" onClick={handleCollectMoney}>Collect Money</Button>
+                                            </ThemeProvider>
+                                        </div>}
+                                    </div>:
                                 <div className={"info-text"}>
                                     Try Again!
                                 </div>}
+                                {lotteryEnded &&
+                                    <div>
+                                        <ThemeProvider theme={theme}>
+                                            <Button variant="contained" onClick={handleWinnerSelect}>Choose Winner</Button>
+                                        </ThemeProvider>
+                                    </div>}
                             </div>
                         </div>
                         <div className="players">
