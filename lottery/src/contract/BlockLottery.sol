@@ -55,12 +55,17 @@ contract Lottery{
         require(msg.sender == players[uint(winner_index)],"Only the winner can collect the prize!");
         //transfer the balance of the smart contract to the winner
         players[uint(winner_index)].transfer(address(this).balance);
+
         // Reset the lottery
         delete players;
-        //Reset the lottery
         // Set lottery_over_block to 5 blocks after the current block
         lottery_over_block = block.number + 5;
         winner_index=-1;
+    }
+
+    function resetLottery() public {
+        require(players.length == 0, "Can only reset empty lottery!");
+        lottery_over_block = block.number + 5;
     }
 
     function winner() public {
