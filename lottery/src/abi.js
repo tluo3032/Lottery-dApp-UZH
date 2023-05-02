@@ -1,12 +1,39 @@
 const abi = [
     {
         "inputs": [],
+        "name": "collectPrize",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "hasLotteryEnded",
+        "outputs": [
+            {
+                "internalType": "bool",
+                "name": "",
+                "type": "bool"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "joinTheLottery",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "stateMutability": "nonpayable",
         "type": "constructor"
     },
     {
         "inputs": [],
-        "name": "collectPrize",
+        "name": "winner",
         "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
@@ -78,13 +105,6 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "joinTheLottery",
-        "outputs": [],
-        "stateMutability": "payable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
         "name": "lottery_over_block",
         "outputs": [
             {
@@ -113,13 +133,6 @@ const abi = [
             }
         ],
         "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "winner",
-        "outputs": [],
-        "stateMutability": "nonpayable",
         "type": "function"
     }
 ];
