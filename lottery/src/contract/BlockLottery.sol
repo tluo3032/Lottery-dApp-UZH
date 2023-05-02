@@ -69,6 +69,11 @@ contract Lottery{
         winner_index=-1;
     }
 
+    function resetLottery() public {
+        require(players.length == 0, "Can only reset empty lottery!");
+        lottery_over_block = block.number + 5;
+    }
+
     function winner() public {
         require(block.number >= lottery_over_block, "The lottery has not ended yet!");
         require(winner_index == -1, "Winner has already been decided!");
