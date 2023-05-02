@@ -46,12 +46,14 @@ contract Lottery{
         return lottery_over_block;
     }
 
-    function hasLotteryEnded() public returns (bool) {
+    function hasLotteryEnded() public view returns (bool) {
         bool lotteryEnded =  block.number >= lottery_over_block || players.length == 5;
-        if(lotteryEnded == true){
-            winner();
-        }
         return lotteryEnded;
+    }
+
+    function resetLottery() public {
+        require(players.length == 0, "Can only reset empty lottery!");
+        lottery_over_block = block.number + 5;
     }
 
     function collectPrize() public {
