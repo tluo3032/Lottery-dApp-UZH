@@ -57,10 +57,8 @@ function App() {
         } else {
             console.log("MetaMask is not installed");
         }
-        await fetchPlayers();
-        await fetchWinnerAddress();
-        await fetchWinnerAddress();
     };
+
 
     async function fetchBalance() {
         try {
@@ -82,7 +80,6 @@ function App() {
                 const lotteryOverBlock = await lotteryContract.methods.getLotteryEndBlock().call();
                 setLotteryEnded(currentBlockNumber >= lotteryOverBlock);
                 return currentBlockNumber >= lotteryOverBlock;
-
             } else {
                 console.log("Lottery contract is not loaded or doesn't have an address set");
                 return false;
@@ -159,6 +156,8 @@ function App() {
     useEffect(() => {
         async function fetchData() {
             await fetchBalance();
+            await fetchPlayers();
+            await fetchWinnerAddress();
             const ended = await hasLotteryEnded();
             setLotteryEnded(ended);
         }
