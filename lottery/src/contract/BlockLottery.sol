@@ -24,7 +24,7 @@ contract Lottery{
         // Only one ticket per account.
         require(!hasUserJoined(msg.sender), "User has already joined the lottery!");
 
-        //add the address who invokes this function to the players array 
+        //add the address who invokes this function to the players array
         players.push(payable(msg.sender));
     }
 
@@ -46,9 +46,16 @@ contract Lottery{
     }
 
     function collectPrize() public {
-        require(winner_index != -1, "Winner has not been decided yet!"); // we know the winner
+        require(winner_index != -1, "Winner has not been decided yet!");
+        require(msg.sender == players[uint(winner_index)],"Only the winner can collect the prize!");
         //transfer the balance of the smart contract to the winner
         players[uint(winner_index)].transfer(address(this).balance);
+        // Reset the lottery
+        delete players;
+        //Reset the lottery
+        // Set lottery_over_block to 5 blocks after the current block
+        lottery_over_block = block.number + 5;
+        winner_index=-1;
     }
 
     function winner() public {
@@ -72,7 +79,7 @@ contract Lottery{
         //view but not modify the lottery balance
         return address(this).balance;
     }
-    
+
     function getPlayers() public view returns (address payable[] memory){
         //stored temporarily only in the func lifecycle
         return players;
