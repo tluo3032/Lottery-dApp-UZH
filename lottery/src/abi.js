@@ -6,19 +6,6 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "amIWinner",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
         "name": "collectPrize",
         "outputs": [],
         "stateMutability": "nonpayable",
@@ -26,7 +13,7 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "currentRoundBalance",
+        "name": "getBalance",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -39,7 +26,20 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "getBalance",
+        "name": "getBlockNumber",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getLotteryEndBlock",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -78,19 +78,6 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "hasLotteryEnded",
-        "outputs": [
-            {
-                "internalType": "bool",
-                "name": "",
-                "type": "bool"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
         "name": "joinTheLottery",
         "outputs": [],
         "stateMutability": "payable",
@@ -98,20 +85,7 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "lotteryEndBlock",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "nonce",
+        "name": "lottery_over_block",
         "outputs": [
             {
                 "internalType": "uint256",
@@ -143,46 +117,9 @@ const abi = [
     },
     {
         "inputs": [],
-        "name": "prizeAmount",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
         "name": "winner",
-        "outputs": [
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            },
-            {
-                "internalType": "uint256",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "winnerAddress",
-        "outputs": [
-            {
-                "internalType": "address payable",
-                "name": "",
-                "type": "address"
-            }
-        ],
-        "stateMutability": "view",
         "type": "function"
     }
 ];
