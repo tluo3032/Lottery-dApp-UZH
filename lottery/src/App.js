@@ -20,6 +20,8 @@ function App() {
     const [players, setPlayers] = useState([]);
     const [lotteryEnded, setLotteryEnded] = useState(false);
     const [winnerAddress, setWinnerAddress]=useState("");
+    const [forceUpdate, setForceUpdate] = useState(false);
+
 
 
     const theme = createTheme({
@@ -44,20 +46,30 @@ function App() {
         }
     }
 
-    const loadContract = async () => {
-        const provider = await detectEthereumProvider();
-        if (provider) {
-            const web3 = new Web3(provider);
-            const abi = require('./abi');
-            const contract = new web3.eth.Contract(abi);
-            contract.options.address = inputContractAddress; // Set the address before setting the state
-            setLotteryContract(contract);
-            console.log('Contract address:', contract.options.address);
-            console.log('Loaded contract:', contract);
+    async function loadContract() {
+        if (window.ethereum) {
+            try {
+                const web3 = new Web3(window.ethereum);
+                const accounts = await web3.eth.getAccounts();
+                setAccounts(accounts);
+
+                const lotteryContract = new web3.eth.Contract(abi, inputContractAddress);
+                setLotteryContract(lotteryContract);
+
+                // fetch and set the winner address after loading the contract only if the lottery has ended
+                if (lotteryEnded) {
+                    const winnerAddress = await lotteryContract.methods.getWinnerAddress().call();
+                    setWinnerAddress(winnerAddress);
+                }
+
+            } catch (err) {
+                console.error("Error loading contract:", err);
+            }
         } else {
-            console.log("MetaMask is not installed");
+            alert("Please install MetaMask!");
         }
-    };
+    }
+
 
 
     async function fetchBalance() {
@@ -90,21 +102,30 @@ function App() {
         }
     }
 
-    async function handleWinnerSelect(){
-        if(lotteryEnded){
-            if (lotteryContract && lotteryContract.options.address) {
-                const winner = await lotteryContract.methods.winner().send({from:accounts[0]});
-                console.log("Select the winner!");
-                const newWinnerAddress = await lotteryContract.methods.getWinnerAddress().call();
-                setWinnerAddress(newWinnerAddress);
-                console.log("winner address is:");
-                console.log(newWinnerAddress);
-            } else {
-                console.log("Lottery contract is not loaded or doesn't have an address set");
-                return false;
+    async function handleWinnerSelect() {
+        try {
+            // Request account access
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+            if (lotteryEnded) {
+                if (lotteryContract && lotteryContract.options.address) {
+                    const winner = await lotteryContract.methods.winner().send({ from: accounts[0] });
+                    console.log("Select the winner!");
+                    const newWinnerAddress = await lotteryContract.methods.getWinnerAddress().call();
+                    setWinnerAddress(newWinnerAddress);
+                    console.log("winner address is:");
+                    console.log(newWinnerAddress);
+                    await fetchWinnerAddress();
+                } else {
+                    console.log("Lottery contract is not loaded or doesn't have an address set");
+                    return false;
+                }
             }
+        } catch (error) {
+            console.error('Error:', error);
         }
     }
+
 
     async function handleCollectMoney(){
         if(lotteryEnded){
@@ -157,7 +178,7 @@ function App() {
         async function fetchData() {
             await fetchBalance();
             await fetchPlayers();
-            await fetchWinnerAddress();
+            //await fetchWinnerAddress();
             const ended = await hasLotteryEnded();
             setLotteryEnded(ended);
         }
@@ -207,7 +228,7 @@ function App() {
         await lotteryContract.methods.joinTheLottery().send(options);
         await fetchBalance();
         await fetchPlayers();
-        await fetchWinnerAddress();
+        // await fetchWinnerAddress();
     }
     return (
         <div className="main">
@@ -276,19 +297,19 @@ function App() {
                                 <div className="playerlist">{winnerAddress}</div>
                                 {winnerAddress && walletAddress && walletAddress.includes(winnerAddress.toLowerCase())?
                                     <div>
-                                    <div className={"info-text"}>
-                                        Congrats!
-                                    </div>
-                                    {lotteryEnded &&
-                                        <div className="buttonfield">
-                                            <ThemeProvider theme={theme}>
-                                                <Button variant="contained" onClick={handleCollectMoney}>Collect Money</Button>
-                                            </ThemeProvider>
-                                        </div>}
+                                        <div className={"info-text"}>
+                                            Congrats!
+                                        </div>
+                                        {lotteryEnded &&
+                                            <div className="buttonfield">
+                                                <ThemeProvider theme={theme}>
+                                                    <Button variant="contained" onClick={handleCollectMoney}>Collect Money</Button>
+                                                </ThemeProvider>
+                                            </div>}
                                     </div>:
-                                <div className={"info-text"}>
-                                    Try Again!
-                                </div>}
+                                    <div className={"info-text"}>
+                                        Try Again!
+                                    </div>}
                                 {lotteryEnded &&
                                     <div>
                                         <ThemeProvider theme={theme}>

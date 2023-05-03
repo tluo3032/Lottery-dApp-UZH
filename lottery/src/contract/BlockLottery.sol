@@ -51,10 +51,6 @@ contract Lottery{
         return lotteryEnded;
     }
 
-    function resetLottery() public {
-        require(players.length == 0, "Can only reset empty lottery!");
-        lottery_over_block = block.number + 5;
-    }
 
     function collectPrize() public {
         require(winner_index != -1, "Winner has not been decided yet!");
