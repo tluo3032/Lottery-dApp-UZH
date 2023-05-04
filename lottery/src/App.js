@@ -57,11 +57,16 @@ function App() {
                 setLotteryContract(lotteryContract);
 
                 // fetch and set the winner address after loading the contract only if the lottery has ended
-                if (lotteryEnded) {
+                /*if (lotteryEnded) {
                     const winnerAddress = await lotteryContract.methods.getWinnerAddress().call();
                     setWinnerAddress(winnerAddress);
+                }*/
+                try{
+                    const winnerAddress = await lotteryContract.methods.getWinnerAddress().call();
+                    setWinnerAddress(winnerAddress);
+                }catch(err){
+                    console.log("Sorry this is the first round, there is no winner from last round.");
                 }
-
             } catch (err) {
                 console.error("Error loading contract:", err);
             }
